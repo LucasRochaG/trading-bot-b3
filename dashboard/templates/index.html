@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Trading Bot B3</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background: #f4f4f4;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 180px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background: #eee;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Trading Bot B3 — Dashboard</h1>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total de operações</h3>
+            <div class="value" id="total-trades">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Compras</h3>
+            <div class="value" id="buys">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Vendas</h3>
+            <div class="value" id="sells">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Patrimônio</h3>
+            <div class="value" id="equity">-</div>
+        </div>
+
+    </div>
+
+    <h2>Últimas operações</h2>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Ativo</th>
+                <th>Operação</th>
+                <th>Quantidade</th>
+                <th>Preço</th>
+                <th>Motivo</th>
+            </tr>
+        </thead>
+
+        <tbody id="trades">
+        </tbody>
+
+    </table>
+
+    <script>
+
+        async function loadSummary() {
+
+            const response = await fetch("/api/summary");
+            const data = await response.json();
+
+            document.getElementById("total-trades").textContent =
+                data.total_trades;
+
+            document.getElementById("buys").textContent =
+                data.buys;
+
+            document.getElementById("sells").textContent =
+                data.sells;
+
+            if (data.current_equity !== null) {
+                document.getElementById("equity").textContent =
+                    "R$ " + data.current_equity.toFixed(2);
+            }
+        }
+
+
+        async function loadTrades() {
+
+            const response = await fetch("/api/trades");
+            const trades = await response.json();
+
+            const tbody = document.getElementById("trades");
+
+            tbody.innerHTML = "";
+
+            trades.forEach(trade => {
+
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>${trade.timestamp}</td>
+                    <td>${trade.ticker}</td>
+                    <td>${trade.side.toUpperCase()}</td>
+                    <td>${trade.quantity}</td>
+                    <td>R$ ${trade.price.toFixed(2)}</td>
+                    <td>${trade.reason || ""}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+
+        async function loadDashboard() {
+
+            try {
+                await loadSummary();
+                await loadTrades();
+            } catch (error) {
+                console.error(
+                    "Erro ao carregar dashboard:",
+                    error
+                );
+            }
+        }
+
+
+        loadDashboard();
+
+        setInterval(
+            loadDashboard,
+            10000
+        );
+
+    </script>
+
+</body>
+
+</html>
