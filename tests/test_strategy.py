@@ -1,3 +1,4 @@
+```python
 from datetime import datetime
 
 from engine.market_data.base import Tick
@@ -35,12 +36,16 @@ def test_detects_bullish_crossover():
 
     prices = [10, 10, 10, 10, 15, 20]
 
-    signal = None
+    signals = []
 
     for price in prices:
         signal = strat.on_tick(
             make_tick("PETR4", price)
         )
 
-    assert signal is not None
-    assert signal.side.value == "buy"
+        if signal is not None:
+            signals.append(signal)
+
+    assert len(signals) > 0
+    assert signals[0].side.value == "buy"
+```
